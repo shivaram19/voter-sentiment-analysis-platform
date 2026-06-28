@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")/.."
 
 echo "Starting local development environment..."
-docker-compose up --build -d
+docker compose up --build -d
 
 echo "Services:"
 echo "  Backend API: http://localhost:8080/api"
