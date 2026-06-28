@@ -47,10 +47,10 @@ public class AuthService {
     @Transactional
     public LoginResponse refresh(RefreshRequest request) {
         String hash = jwtService.hashToken(request.getRefreshToken());
-        RefreshToken token = refreshTokenRepository.findValidByHash(hash)
+        RefreshToken token = refreshTokenRepository.findByHash(hash)
                 .orElseThrow(() -> new NotAuthorizedException("Invalid refresh token"));
 
-        if (token.isReused() || token.isRevoked()) {
+        if (token.isReused() || token.isRevoked() || token.getExpiresAt().isBefore(Instant.now())) {
             refreshTokenRepository.revokeFamily(token.getFamily());
             throw new NotAuthorizedException("Token reuse detected");
         }

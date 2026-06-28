@@ -11,6 +11,7 @@ import java.util.*;
 public class ExcelValidator {
 
     private static final int MAX_SHEETS = 10;
+    private static final int MAX_ROWS = 500;
     private static final List<String> REQUIRED_COLUMNS = List.of(
             "question_id",
             "group_name",
@@ -55,6 +56,11 @@ public class ExcelValidator {
     private void validateSheet(Sheet sheet, DataFormatter formatter, ValidationResult result) {
         if (sheet.getPhysicalNumberOfRows() == 0) {
             result.addError("Sheet '" + sheet.getSheetName() + "' is empty");
+            return;
+        }
+
+        if (sheet.getLastRowNum() > MAX_ROWS) {
+            result.addError("Sheet '" + sheet.getSheetName() + "' has more than " + MAX_ROWS + " rows");
             return;
         }
 

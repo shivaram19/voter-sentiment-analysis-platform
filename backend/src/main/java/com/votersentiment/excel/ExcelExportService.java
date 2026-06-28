@@ -7,6 +7,7 @@ import com.votersentiment.excel.logs.ExportType;
 import com.votersentiment.questionnaire.Question;
 import com.votersentiment.questionnaire.QuestionGroup;
 import com.votersentiment.questionnaire.QuestionType;
+import com.votersentiment.questionnaire.Questionnaire;
 import com.votersentiment.questionnaire.repo.QuestionGroupRepository;
 import com.votersentiment.questionnaire.repo.QuestionRepository;
 import com.votersentiment.survey.Response;
@@ -82,6 +83,9 @@ public class ExcelExportService {
             workbook.write(out);
             logExport(questionnaireId, ExportType.TEMPLATE, "template.xlsx", ExportStatus.SUCCESS);
             return out.toByteArray();
+        } catch (IOException e) {
+            logExportFailure(questionnaireId, ExportType.TEMPLATE, "template.xlsx", e.getMessage());
+            throw e;
         }
     }
 
@@ -122,6 +126,9 @@ public class ExcelExportService {
             workbook.dispose();
             logExport(questionnaireId, ExportType.RESPONSES, "responses.xlsx", ExportStatus.SUCCESS);
             return out.toByteArray();
+        } catch (IOException e) {
+            logExportFailure(questionnaireId, ExportType.RESPONSES, "responses.xlsx", e.getMessage());
+            throw e;
         }
     }
 
@@ -158,11 +165,24 @@ public class ExcelExportService {
     }
 
     private void logExport(UUID questionnaireId, ExportType type, String filename, ExportStatus status) {
+        Questionnaire questionnaire = Questionnaire.findById(questionnaireId);
         ExportLog log = ExportLog.builder()
-                // TODO: set questionnaire reference once circular dependency resolved
+                .questionnaire(questionnaire)
                 .exportType(type)
                 .filename(filename)
                 .status(status)
+                .build();
+        log.persist();
+    }
+
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void logExportFailure(UUID questionnaireId, ExportType type, String filename, String errorMessage) {
+        Questionnaire questionnaire = Questionnaire.findById(questionnaireId);
+        ExportLog log = ExportLog.builder()
+                .questionnaire(questionnaire)
+                .exportType(type)
+                .filename(filename)
+                .status(ExportStatus.FAILED)
                 .build();
         log.persist();
     }

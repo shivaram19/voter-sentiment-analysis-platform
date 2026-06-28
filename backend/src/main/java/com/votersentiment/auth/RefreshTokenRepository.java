@@ -16,7 +16,11 @@ public class RefreshTokenRepository implements PanacheRepositoryBase<RefreshToke
                 .firstResultOptional();
     }
 
+    public Optional<RefreshToken> findByHash(String tokenHash) {
+        return find("tokenHash", tokenHash).firstResultOptional();
+    }
+
     public void revokeFamily(String family) {
-        update("revoked = true where family = ?1", family);
+        update("set revoked = true, reused = true where family = ?1", family);
     }
 }
