@@ -157,9 +157,13 @@ After generating the first cut, additional first-principles gaps surfaced:
 4. Added `API_BASE_URL` runtime environment variable to `docker-compose.yml` for the admin service.
 5. Added `attemptCount` to `SurveyDraftTable` and enforced a hard max of 5 retries in the sync worker.
 6. Updated `processQueue` to return `Result<bool>` so the worker can signal whether a retry is still needed.
+7. Fixed malformed `backend/pom.xml`: removed the non-existent `quarkus-rest-multipart` dependency, corrected the `quarkus-rest-jackson` block, and replaced the invalid `<testOnly>` tag with `<scope>test</scope>`.
+8. Fixed `QuestionnaireService.activate/deactivate` to return a full `QuestionnaireDto`, matching the REST resource contract.
 
 ## Remaining risks to watch
 
 - Drift code generation must be run (`flutter pub run build_runner build`) before the mobile app compiles.
 - Soft-delete filters and pagination need integration tests under load.
+- Backend tests currently require a running PostgreSQL instance or a `%test` H2 profile; tracked in #36 and #37.
+- Mobile sync UI and WorkManager behavior need on-device or emulator validation.
 - Kong/AWS API Gateway rate-limiting policies are still out of scope and must be configured at the infrastructure layer.
