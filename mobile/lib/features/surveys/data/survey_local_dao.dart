@@ -35,7 +35,9 @@ class SurveyLocalDao {
           ),
         );
 
-    await _db.delete(_db.responseTable).where((t) => t.clientSurveyId.equals(survey.clientSurveyId)).go();
+    await (_db.delete(_db.responseTable)
+          ..where((t) => t.clientSurveyId.equals(survey.clientSurveyId)))
+        .go();
     for (final response in survey.responses) {
       await _db.into(_db.responseTable).insert(
             ResponseTableCompanion.insert(

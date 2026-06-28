@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'core/network/api_client.dart';
-import 'core/storage/app_database.dart';
-import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
+import 'core/di/service_locator.dart';
+import 'features/auth/data/auth_repository_impl.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/questionnaires/presentation/questionnaire_list_screen.dart';
 import 'features/surveys/presentation/survey_screen.dart';
@@ -25,7 +24,10 @@ final _router = GoRouter(
     GoRoute(path: '/sync', builder: (context, state) => const SyncQueueScreen()),
   ],
   redirect: (context, state) async {
-    // TODO: check auth state and redirect to login if no token
+    final isAuthenticated = await getIt<AuthRepositoryImpl>().isAuthenticated;
+    final isLoginRoute = state.matchedLocation == '/login';
+    if (!isAuthenticated && !isLoginRoute) return '/login';
+    if (isAuthenticated && isLoginRoute) return '/questionnaires';
     return null;
   },
 );

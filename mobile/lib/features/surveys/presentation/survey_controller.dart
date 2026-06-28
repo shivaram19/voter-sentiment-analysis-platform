@@ -63,6 +63,10 @@ class SurveyController extends StateNotifier<SurveyState> {
     state = state.copyWith(isLoading: false, questionnaire: questionnaire);
   }
 
+  void setError(String? error) {
+    state = state.copyWith(isLoading: false, error: error);
+  }
+
   void updateResponse(String questionId, dynamic value) {
     final updated = Map<String, dynamic>.from(state.responses);
     updated[questionId] = value;

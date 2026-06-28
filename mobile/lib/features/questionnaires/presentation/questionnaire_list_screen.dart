@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/di/service_locator.dart';
+import '../data/questionnaire_repository_impl.dart';
 import 'questionnaire_list_controller.dart';
 import 'widgets/questionnaire_card.dart';
 
@@ -35,7 +37,7 @@ class _QuestionnaireListScreenState extends ConsumerState<QuestionnaireListScree
         actions: [
           IconButton(
             icon: const Icon(Icons.sync),
-            onPressed: () => Navigator.pushNamed(context, '/sync'),
+            onPressed: () => context.push('/sync'),
           ),
         ],
       ),

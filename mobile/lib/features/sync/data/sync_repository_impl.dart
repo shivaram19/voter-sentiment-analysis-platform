@@ -76,7 +76,7 @@ class SyncRepositoryImpl implements SyncRepository {
         final syncRepo = SyncRepositoryImpl(surveyRepo);
         final result = await syncRepo.processQueue();
         await db.close();
-        return result is Success<bool> && (result as Success<bool>).data;
+        return result is Success<bool> && result.data;
       } catch (e) {
         return false;
       }

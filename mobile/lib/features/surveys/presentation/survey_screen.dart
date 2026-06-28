@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/di/service_locator.dart';
+import '../../../core/error/result.dart';
+import '../../questionnaires/data/questionnaire_repository_impl.dart';
 import '../../questionnaires/domain/questionnaire_model.dart';
+import '../data/survey_repository_impl.dart';
 import 'survey_controller.dart';
 import 'widgets/question_renderer.dart';
 import 'widgets/survey_progress_bar.dart';
@@ -22,16 +25,17 @@ class SurveyScreen extends ConsumerWidget {
     final controller = ref.read(surveyControllerProvider(questionnaireId).notifier);
     final state = ref.watch(surveyControllerProvider(questionnaireId));
 
-    // TODO: load questionnaire from repository and call controller.load(questionnaire)
-    final questionnaire = QuestionnaireModel(
-      id: questionnaireId,
-      title: 'Sample',
-      isActive: true,
-      languageSupport: const {'en': 'true'},
-      groups: const [],
-    );
     if (state.questionnaire == null && !state.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => controller.load(questionnaire));
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final repo = getIt<QuestionnaireRepositoryImpl>();
+        final result = await repo.getQuestionnaire(questionnaireId);
+        switch (result) {
+          case Success<QuestionnaireModel>(data: final questionnaire):
+            controller.load(questionnaire);
+          case Error<QuestionnaireModel>(failure: final failure):
+            controller.setError(failure.message);
+        }
+      });
     }
 
     if (state.submitted) {

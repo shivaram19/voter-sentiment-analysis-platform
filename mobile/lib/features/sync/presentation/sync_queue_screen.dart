@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/di/service_locator.dart';
 import '../../../core/error/result.dart';
+import '../data/sync_repository_impl.dart';
 import '../domain/sync_repository.dart';
 import 'widgets/sync_status_banner.dart';
 

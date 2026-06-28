@@ -1,0 +1,43 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Symbolication/obfuscation
+app.*.symbols
+app.*.map.json
+
+# Android
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/key.properties
+/android/local.properties
+/android/app/src/main/java/io/
+/android/.gradle/
+
+# iOS
+/ios/Flutter/.last_build_id
+/ios/Pods/
+/ios/.symlinks/
+
+# Generated code is committed so CI builds do not require build_runner.
+# If you prefer to regenerate, uncomment the next line.
+# *.g.dart
+# *.freezed.dart

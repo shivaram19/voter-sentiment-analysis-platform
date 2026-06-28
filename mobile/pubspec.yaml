@@ -28,7 +28,6 @@ dependencies:
   # Location
   geolocator: ^10.1.0
   uuid: ^4.3.3
-  uuid: ^4.3.3
 
   # Navigation & state
   go_router: ^13.0.1

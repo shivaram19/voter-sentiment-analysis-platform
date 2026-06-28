@@ -1,6 +1,4 @@
 import '../../../core/error/result.dart';
-
-import '../../../core/error/failures.dart';
 import 'user_model.dart';
 
 abstract class AuthRepository {

@@ -15,7 +15,7 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Result<UserModel>> getMe() async => Success(UserModel(id: '1', username: 'test', name: 'Test', role: 'SURVEYOR'));
+  Future<Result<UserModel>> getMe() async => const Success(UserModel(id: '1', username: 'test', name: 'Test', role: 'SURVEYOR'));
 
   @override
   Future<void> logout() async {}
