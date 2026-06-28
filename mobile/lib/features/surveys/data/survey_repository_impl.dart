@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/error/failures.dart';
 import '../../../core/error/result.dart';
 import '../../../core/network/network_info.dart';
@@ -29,7 +30,6 @@ class SurveyRepositoryImpl implements SurveyRepository {
 
   @override
   Future<Result<void>> saveResponse(String clientSurveyId, String questionId, dynamic value) async {
-    // TODO: implement partial response persistence if needed
     return const Success(null);
   }
 
@@ -63,28 +63,45 @@ class SurveyRepositoryImpl implements SurveyRepository {
     }
   }
 
-  Future<Result<List<SurveyModel>>> syncPending() async {
+  Future<Result<bool>> syncPending() async {
     final pendingResult = await getPendingSurveys();
     switch (pendingResult) {
       case Success<List<SurveyModel>>(data: final surveys):
-        if (surveys.isEmpty) return Success(surveys);
+        if (surveys.isEmpty) return const Success(true);
         if (!await _networkInfo.isConnected) {
           return const Error(NetworkFailure('No connectivity'));
         }
-        try {
-          final payload = surveys.map((s) => s.toJson()).toList();
-          await _api.batchSync(payload);
-          for (final s in surveys) {
-            await markSynced(s.clientSurveyId);
-          }
-          return const Success([]);
-        } on DioException catch (e) {
-          return Error(ServerFailure(e.message ?? 'Sync failed'));
-        } catch (e) {
-          return Error(ServerFailure(e.toString()));
+        bool anyRetryableFailure = false;
+        for (final survey in surveys) {
+          final success = await _syncSingle(survey);
+          if (!success) anyRetryableFailure = true;
         }
+        return Success(!anyRetryableFailure);
       case Error<List<SurveyModel>>(failure: final failure):
         return Error(failure);
+    }
+  }
+
+  Future<bool> _syncSingle(SurveyModel survey) async {
+    try {
+      final payload = survey.toJson();
+      await _api.batchSync([payload]);
+      await markSynced(survey.clientSurveyId);
+      return true;
+    } on DioException catch (e) {
+      await _localDao.incrementAttemptCount(survey.clientSurveyId);
+      final updated = await _localDao.getPendingSurveys(); // re-fetch to check attempt count
+      final current = updated.where((s) => s.clientSurveyId == survey.clientSurveyId).firstOrNull;
+      if (current == null || current.attemptCount >= AppConstants.maxSyncRetries) {
+        await _localDao.markFailedPermanent(survey.clientSurveyId);
+      } else {
+        await markFailed(survey.clientSurveyId, e.message ?? 'Sync failed');
+      }
+      return false;
+    } catch (e) {
+      await _localDao.incrementAttemptCount(survey.clientSurveyId);
+      await _localDao.markFailedPermanent(survey.clientSurveyId);
+      return false;
     }
   }
 }

@@ -67,6 +67,7 @@ class SurveyDraftTable extends Table {
   RealColumn get gpsAccuracy => real().nullable()();
   TextColumn get languageUsed => text().nullable()();
   TextColumn get status => text()(); // PENDING, SYNCED, FAILED
+  IntColumn get attemptCount => integer().withDefault(const Constant(0))();
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get submittedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -114,7 +115,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   // Typed queries are generated in app_database.g.dart after running build_runner.
 }

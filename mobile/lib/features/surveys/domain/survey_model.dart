@@ -20,6 +20,8 @@ class SurveyModel {
   final DateTime? submittedAt;
   final List<ResponseModel> responses;
 
+  final int attemptCount;
+
   SurveyModel({
     required this.clientSurveyId,
     required this.questionnaireId,
@@ -39,6 +41,7 @@ class SurveyModel {
     required this.startedAt,
     this.submittedAt,
     this.responses = const [],
+    this.attemptCount = 0,
   });
 
   Map<String, dynamic> toJson() {

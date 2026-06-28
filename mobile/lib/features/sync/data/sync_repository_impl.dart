@@ -53,12 +53,12 @@ class SyncRepositoryImpl implements SyncRepository {
   }
 
   @override
-  Future<Result<void>> processQueue() async {
+  Future<Result<bool>> processQueue() async {
     final result = await _surveyRepository.syncPending();
     switch (result) {
-      case Success<List<SurveyModel>>(data: final remaining):
-        return const Success(null);
-      case Error<List<SurveyModel>>(failure: final failure):
+      case Success<bool>(data: final allDone):
+        return Success(allDone);
+      case Error<bool>(failure: final failure):
         return Error(failure);
     }
   }
@@ -76,7 +76,7 @@ class SyncRepositoryImpl implements SyncRepository {
         final syncRepo = SyncRepositoryImpl(surveyRepo);
         final result = await syncRepo.processQueue();
         await db.close();
-        return result is Success<void>;
+        return result is Success<bool> && (result as Success<bool>).data;
       } catch (e) {
         return false;
       }

@@ -1,5 +1,7 @@
 package com.votersentiment.survey;
 
+import io.smallrye.common.annotation.Blocking;
+
 import com.votersentiment.common.ApiResponse;
 import com.votersentiment.survey.dto.*;
 import com.votersentiment.survey.service.SurveyService;
@@ -16,6 +18,7 @@ import jakarta.ws.rs.core.SecurityContext;
 import java.util.List;
 import java.util.UUID;
 
+@Blocking
 @Path("/survey")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)

@@ -1,5 +1,7 @@
 package com.votersentiment.admin;
 
+import io.smallrye.common.annotation.Blocking;
+
 import com.votersentiment.admin.dto.UserDto;
 import com.votersentiment.admin.dto.UserRequestDto;
 import com.votersentiment.admin.service.AdminService;
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Blocking
 @Path("/admin/users")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

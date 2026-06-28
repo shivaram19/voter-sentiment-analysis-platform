@@ -1,5 +1,7 @@
 package com.votersentiment.questionnaire.resource;
 
+import io.smallrye.common.annotation.Blocking;
+
 import com.votersentiment.common.ApiResponse;
 import com.votersentiment.common.PagedResponse;
 import com.votersentiment.questionnaire.dto.QuestionnaireDto;
@@ -13,6 +15,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.UUID;
 
+@Blocking
 @Path("/surveyor")
 @Produces(MediaType.APPLICATION_JSON)
 public class SurveyorResource {

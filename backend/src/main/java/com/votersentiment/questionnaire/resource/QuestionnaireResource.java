@@ -1,5 +1,7 @@
 package com.votersentiment.questionnaire.resource;
 
+import io.smallrye.common.annotation.Blocking;
+
 import com.votersentiment.common.ApiResponse;
 import com.votersentiment.common.PagedResponse;
 import com.votersentiment.excel.ExcelExportService;
@@ -26,6 +28,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.UUID;
 
+@Blocking
 @Path("/admin/questionnaire")
 @Produces(MediaType.APPLICATION_JSON)
 public class QuestionnaireResource {

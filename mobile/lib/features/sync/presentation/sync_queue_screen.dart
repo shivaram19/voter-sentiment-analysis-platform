@@ -49,9 +49,9 @@ class _SyncQueueScreenState extends ConsumerState<SyncQueueScreen> {
     if (mounted) {
       setState(() => _syncing = false);
       switch (result) {
-        case Success<void>():
-          _error = null;
-        case Error<void>(failure: final failure):
+        case Success<bool>(data: final allDone):
+          _error = allDone ? null : 'Some surveys failed and will retry later.';
+        case Error<bool>(failure: final failure):
           _error = failure.message;
       }
       await _loadPending();

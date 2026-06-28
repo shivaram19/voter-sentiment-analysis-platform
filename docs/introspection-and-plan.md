@@ -119,3 +119,47 @@ A: No. We switch to `NativeDatabase` with explicit WAL pragmas to satisfy the re
 ## Clarity statement
 
 The biggest risk in the original plan was treating the sync layer as a simple retry loop rather than an idempotent, durable operation queue. The revised plan makes idempotency and token rotation first-class citizens while keeping the implementation minimal enough for the MVP.
+
+## Second-pass introspection (deeper unknowns)
+
+After generating the first cut, additional first-principles gaps surfaced:
+
+### 1. RESTEasy Reactive + blocking Hibernate ORM Panache
+
+- `quarkus-rest` (RESTEasy Reactive) runs requests on the Vert.x event loop by default.
+- Calling blocking JDBC/Hibernate on the event loop is unsafe and harms throughput.
+- The canonical fix is to annotate blocking resources with `@Blocking` so Quarkus dispatches them to a worker thread.
+- This keeps the simple `@Transactional` / Panache repository model intact without migrating to Hibernate Reactive.
+
+### 2. SmallRye JWT private-key format
+
+- `Jwt.sign()` expects a PKCS#8 private key (`-----BEGIN PRIVATE KEY-----`).
+- `openssl genrsa` produces PKCS#1 (`-----BEGIN RSA PRIVATE KEY-----`), which causes `SRJWT05028: Signing key can not be created from the loaded content`.
+- The dev keys must be converted: `openssl pkcs8 -topk8 -nocrypt`.
+
+### 3. Nginx runtime environment variables in a static React container
+
+- Vite bakes environment variables at build time.
+- Passing `VITE_API_BASE_URL` at container runtime has no effect unless the built artifacts are mutated or Nginx substitutes a placeholder.
+- The correct pattern is an `nginx.conf.template` + `envsubst` at container startup, producing `/etc/nginx/conf.d/default.conf`.
+
+### 4. WorkManager retry semantics vs. per-item max retries
+
+- WorkManager’s exponential backoff schedules the *task*, not individual surveys.
+- The `executeTask` callback does not receive `runAttemptCount` in the Flutter API, so max-5-retries must be tracked per survey in the local database.
+- We added `attemptCount` to `SurveyDraftTable`; after 5 failures the survey is marked `FAILED_PERMANENT` and skipped.
+
+## Changes applied in second pass
+
+1. Added `@Blocking` to all REST resource classes to keep Hibernate ORM on worker threads.
+2. Converted `backend/src/main/resources/privateKey.pem` to PKCS#8 format.
+3. Replaced `admin/nginx.conf` with `nginx.conf.template` and updated the admin Dockerfile to run `envsubst` on startup.
+4. Added `API_BASE_URL` runtime environment variable to `docker-compose.yml` for the admin service.
+5. Added `attemptCount` to `SurveyDraftTable` and enforced a hard max of 5 retries in the sync worker.
+6. Updated `processQueue` to return `Result<bool>` so the worker can signal whether a retry is still needed.
+
+## Remaining risks to watch
+
+- Drift code generation must be run (`flutter pub run build_runner build`) before the mobile app compiles.
+- Soft-delete filters and pagination need integration tests under load.
+- Kong/AWS API Gateway rate-limiting policies are still out of scope and must be configured at the infrastructure layer.

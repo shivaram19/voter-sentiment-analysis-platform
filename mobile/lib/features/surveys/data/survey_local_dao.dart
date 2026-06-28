@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
+
 import '../../../core/storage/app_database.dart';
 import '../../surveys/domain/response_model.dart';
 import '../../surveys/domain/survey_model.dart';
-import 'package:uuid/uuid.dart';
 
 class SurveyLocalDao {
   final AppDatabase _db;
@@ -33,7 +35,6 @@ class SurveyLocalDao {
           ),
         );
 
-    // Upsert responses
     await _db.delete(_db.responseTable).where((t) => t.clientSurveyId.equals(survey.clientSurveyId)).go();
     for (final response in survey.responses) {
       await _db.into(_db.responseTable).insert(
@@ -55,7 +56,8 @@ class SurveyLocalDao {
 
   Future<List<SurveyModel>> getPendingSurveys() async {
     final rows = await (_db.select(_db.surveyDraftTable)
-          ..where((t) => t.status.equals('PENDING') | t.status.equals('FAILED')))
+          ..where((t) => t.status.equals('PENDING') | t.status.equals('FAILED'))
+          ..where((t) => t.attemptCount.isSmallerThanValue(5)))
         .get();
     final surveys = <SurveyModel>[];
     for (final row in rows) {
@@ -68,6 +70,19 @@ class SurveyLocalDao {
     await (_db.update(_db.surveyDraftTable)
           ..where((t) => t.clientSurveyId.equals(clientSurveyId)))
         .write(SurveyDraftTableCompanion(status: Value(status)));
+  }
+
+  Future<void> incrementAttemptCount(String clientSurveyId) async {
+    final row = await (_db.select(_db.surveyDraftTable)
+          ..where((t) => t.clientSurveyId.equals(clientSurveyId)))
+        .getSingle();
+    await (_db.update(_db.surveyDraftTable)
+          ..where((t) => t.clientSurveyId.equals(clientSurveyId)))
+        .write(SurveyDraftTableCompanion(attemptCount: Value(row.attemptCount + 1)));
+  }
+
+  Future<void> markFailedPermanent(String clientSurveyId) async {
+    await updateStatus(clientSurveyId, 'FAILED_PERMANENT');
   }
 
   Future<SurveyModel> _toModel(SurveyDraftTableData row) async {
@@ -91,6 +106,7 @@ class SurveyLocalDao {
       languageUsed: row.languageUsed,
       status: row.status,
       startedAt: row.startedAt,
+      attemptCount: row.attemptCount,
       submittedAt: row.submittedAt,
       responses: responseRows.map((r) {
         return ResponseModel(

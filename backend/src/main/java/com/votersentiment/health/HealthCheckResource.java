@@ -1,5 +1,7 @@
 package com.votersentiment.health;
 
+import io.smallrye.common.annotation.Blocking;
+
 import com.votersentiment.common.ApiResponse;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -9,6 +11,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.Map;
 
+@Blocking
 @Path("/health")
 @Produces(MediaType.APPLICATION_JSON)
 public class HealthCheckResource {
