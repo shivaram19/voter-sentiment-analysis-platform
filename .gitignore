@@ -1,0 +1,47 @@
+# Environment
+.env
+**/.env
+**/.env.local
+
+# Java / Maven
+backend/target/
+backend/.idea/
+backend/*.iml
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/.packages
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.metadata
+mobile/.idea/
+mobile/*.iml
+mobile/ios/Pods/
+mobile/android/.gradle/
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+
+# React / Node
+admin/node_modules/
+admin/dist/
+admin/.env
+admin/.env.local
+admin/coverage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
