@@ -160,10 +160,40 @@ After generating the first cut, additional first-principles gaps surfaced:
 7. Fixed malformed `backend/pom.xml`: removed the non-existent `quarkus-rest-multipart` dependency, corrected the `quarkus-rest-jackson` block, and replaced the invalid `<testOnly>` tag with `<scope>test</scope>`.
 8. Fixed `QuestionnaireService.activate/deactivate` to return a full `QuestionnaireDto`, matching the REST resource contract.
 
+## Third pass: closing the open backlog
+
+1. **Mobile build blockers**
+   - Removed the duplicate `uuid` key in `pubspec.yaml`.
+   - Generated `app_database.g.dart` and committed it so CI does not require `build_runner`.
+   - Added `mobile/build.yaml` and `.gitignore`.
+   - `SurveyScreen` now loads the real questionnaire from the repository.
+   - `main.dart` schedules the WorkManager periodic sync task on startup.
+   - Added `go_router` auth redirect guard and fixed sync-screen navigation.
+   - Fixed Drift `delete` cascade syntax and missing `drift` `Value` imports.
+   - `flutter analyze` reports no issues and `flutter test` passes.
+
+2. **Backend correctness**
+   - Refresh-token replay now detects reuse and revokes the entire family.
+   - Excel validator enforces a 500-row limit per sheet.
+   - `ExportLog` records the questionnaire reference and failure status.
+
+3. **DevOps / testing artifacts**
+   - Added GitHub Actions workflows for backend (Maven + Postgres/Redis services), admin (Node build), and mobile (Flutter analyze/test).
+   - Added AWS MVP Terraform outline under `infra/aws`.
+   - Added k6 load-test script under `tests/load/k6`.
+   - Added field-testing plan under `docs/field-testing-plan.md`.
+   - Added `scripts/smoke-test.sh` that validates the docker-compose stack end-to-end.
+
+4. **Integration tests**
+   - Added tests for refresh-token rotation/reuse detection.
+   - Added idempotency and mixed per-item status assertions for batch sync.
+
+5. **Issue close-out**
+   - All 37 open GitHub issues were verified and closed.
+
 ## Remaining risks to watch
 
-- Drift code generation must be run (`flutter pub run build_runner build`) before the mobile app compiles.
 - Soft-delete filters and pagination need integration tests under load.
-- Backend tests currently require a running PostgreSQL instance or a `%test` H2 profile; tracked in #36 and #37.
 - Mobile sync UI and WorkManager behavior need on-device or emulator validation.
+- AWS Terraform outline is a starting point; production hardening (private subnets, Secrets Manager, TLS, WAF) is still required.
 - Kong/AWS API Gateway rate-limiting policies are still out of scope and must be configured at the infrastructure layer.
