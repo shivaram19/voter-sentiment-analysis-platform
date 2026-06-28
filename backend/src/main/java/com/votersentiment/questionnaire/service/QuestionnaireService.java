@@ -134,7 +134,7 @@ public class QuestionnaireService {
         Questionnaire q = questionnaireRepository.findActiveById(id)
                 .orElseThrow(() -> new NotFoundException("Questionnaire not found"));
         q.setActive(true);
-        return toSummaryDto(q);
+        return toFullDto(q);
     }
 
     @Transactional
@@ -142,7 +142,7 @@ public class QuestionnaireService {
         Questionnaire q = questionnaireRepository.findActiveById(id)
                 .orElseThrow(() -> new NotFoundException("Questionnaire not found"));
         q.setActive(false);
-        return toSummaryDto(q);
+        return toFullDto(q);
     }
 
     @Transactional
