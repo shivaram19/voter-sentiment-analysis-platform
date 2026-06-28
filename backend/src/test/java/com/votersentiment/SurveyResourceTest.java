@@ -6,10 +6,13 @@ import com.votersentiment.survey.ResponseType;
 import com.votersentiment.survey.dto.BatchSyncItem;
 import com.votersentiment.survey.dto.BatchSyncRequest;
 import com.votersentiment.survey.dto.ResponseRequest;
+import com.votersentiment.survey.dto.BatchSyncResultItem;
+import com.votersentiment.survey.service.SurveyService;
 import com.votersentiment.user.Role;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -27,6 +30,9 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 public class SurveyResourceTest {
 
     private String accessToken;
+
+    @Inject
+    SurveyService surveyService;
 
     @BeforeAll
     @TestSecurity(user = "admin", roles = {"ADMIN"})
@@ -72,7 +78,7 @@ public class SurveyResourceTest {
         request.setSurveys(List.of(item));
 
         // First sync
-        given()
+        String firstServerId = given()
             .auth().oauth2(accessToken)
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
@@ -82,7 +88,8 @@ public class SurveyResourceTest {
             .statusCode(200)
             .body("success", equalTo(true))
             .body("data[0].status", equalTo("SYNCED"))
-            .body("data[0].serverSurveyId", notNullValue());
+            .body("data[0].serverSurveyId", notNullValue())
+            .extract().jsonPath().getString("data[0].serverSurveyId");
 
         // Retry with same clientSurveyId should return existing survey, not duplicate
         String serverId = given()
@@ -96,5 +103,39 @@ public class SurveyResourceTest {
             .body("success", equalTo(true))
             .body("data[0].status", equalTo("SYNCED"))
             .extract().jsonPath().getString("data[0].serverSurveyId");
+
+        // Assert idempotency: the server id must be identical across retries.
+        org.junit.jupiter.api.Assertions.assertEquals(firstServerId, serverId);
+    }
+
+    @Test
+    public void testBatchSyncMixedResults() {
+        // Service-level integration check: batch sync returns per-item statuses.
+        UUID validClientId = UUID.randomUUID();
+        UUID failingClientId = null; // will trigger a persistence failure -> FAILED status
+
+        BatchSyncItem validItem = new BatchSyncItem();
+        validItem.setClientSurveyId(validClientId);
+        validItem.setQuestionnaireId(UUID.randomUUID());
+        validItem.setLanguageUsed("en");
+
+        BatchSyncItem failingItem = new BatchSyncItem();
+        failingItem.setClientSurveyId(failingClientId);
+        failingItem.setQuestionnaireId(UUID.randomUUID());
+
+        BatchSyncRequest request = new BatchSyncRequest();
+        request.setSurveys(List.of(validItem, failingItem));
+
+        java.util.List<BatchSyncResultItem> results = surveyService.batchSync(
+                java.util.UUID.fromString("00000000-0000-0000-0000-000000000000"),
+                request);
+
+        org.junit.jupiter.api.Assertions.assertEquals(2, results.size());
+        org.junit.jupiter.api.Assertions.assertEquals("SYNCED", results.get(0).getStatus());
+        org.junit.jupiter.api.Assertions.assertEquals(validClientId, results.get(0).getClientSurveyId());
+        org.junit.jupiter.api.Assertions.assertNotNull(results.get(0).getServerSurveyId());
+
+        org.junit.jupiter.api.Assertions.assertEquals("FAILED", results.get(1).getStatus());
+        org.junit.jupiter.api.Assertions.assertNull(results.get(1).getServerSurveyId());
     }
 }

@@ -76,6 +76,40 @@ public class AuthResourceTest {
         .then()
             .statusCode(200)
             .body("success", equalTo(true))
-            .body("data.accessToken", notNullValue());
+            .body("data.accessToken", notNullValue())
+            .body("data.refreshToken", notNullValue());
+    }
+
+    @Test
+    @Order(4)
+    public void testRefreshTokenRotationAndReuseDetection() {
+        // Rotate once
+        LoginResponse rotated = given()
+            .contentType(ContentType.JSON)
+            .body("{\"refreshToken\":\"" + refreshToken + "\"}")
+        .when()
+            .post("/api/auth/refresh")
+        .then()
+            .statusCode(200)
+            .body("success", equalTo(true))
+            .extract().jsonPath().getObject("data", LoginResponse.class);
+
+        // Replaying the old refresh token must be rejected and revoke the family.
+        given()
+            .contentType(ContentType.JSON)
+            .body("{\"refreshToken\":\"" + refreshToken + "\"}")
+        .when()
+            .post("/api/auth/refresh")
+        .then()
+            .statusCode(401);
+
+        // The rotated token must also be rejected because its family was revoked.
+        given()
+            .contentType(ContentType.JSON)
+            .body("{\"refreshToken\":\"" + rotated.getRefreshToken() + "\"}")
+        .when()
+            .post("/api/auth/refresh")
+        .then()
+            .statusCode(401);
     }
 }
